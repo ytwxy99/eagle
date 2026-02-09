@@ -1,14 +1,13 @@
 from src.data.stock import get_all_a_stock_codes
 from src.backtest.run import run_strategy_backtest
+from src.strategies.low_point_main_force_strategy import LowPointMainForceStrategy
 
 def run(args: any) -> any:
     print("🚀 增强版主力吸货策略回测系统启动...")
-        
-    # 策略参数
-    strategy_params = {
-        'low_period': 20,
-        'volume_ma_period': 10
-    }   
+    strategy = LowPointMainForceStrategy(
+            low_period=20,
+            volume_ma_period=10
+    )
 
     try:
         buy_stocks = []
@@ -19,7 +18,7 @@ def run(args: any) -> any:
         
         for stock_code in stock_codes:
             buy_signal = run_strategy_backtest(
-                stock_code, args.start, args.end, strategy_params
+                stock_code, args.start, args.end, len(stock_codes) == 1, strategy
             )
 
             if buy_signal:

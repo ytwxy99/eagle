@@ -1,39 +1,34 @@
 from src.data.stock import get_stock_data
-from src.strategies.low_point_main_force_strategy import LowPointMainForceStrategy
 from src.backtest.engine import BacktestEngine
+from src.utils.chart import create_enhanced_trading_chart
 
 
-def run_strategy_backtest(stock_code, start_date, end_date=None, strategy_params=None):
+def run_strategy_backtest(stock_code, start_date, end_date=None, backtest=False, strategy=None):
     """运行策略回测"""
     data = None
     try:
         data = get_stock_data(stock_code, start_date, end_date)
     except ValueError as e:
+        print(f"⚠️ {e}")
         return False
-        
-    # 创建策略 - 使用近期低点主力吸筹策略
-    strategy = LowPointMainForceStrategy(
-        low_period=20,
-        volume_ma_period=10
-    )
     
     # 生成信号
     signals = strategy.generate_signals(data[['open', 'high', 'low', 'close', 'volume']])
     try:
+        if backtest:
+            # 运行回测
+            engine = BacktestEngine(initial_capital=100000, commission=0.001, slippage=0.001)
+            results, detailed_data = engine.run_backtest(data, signals)
+    
+            # 获取交易记录
+            trades = engine.get_trade_log()
+            chart_path = create_enhanced_trading_chart(
+               data, trades, detailed_data, stock_code, results, start_date, end_date
+            )
+            print(f"\n🎉 回测完成！图表已保存到: {chart_path}")
+                
         if signals.tail(1)['signal'].values[0] == 1:
             #signals.to_csv('/Users/bytedance/Desktop/dessignals_output.csv', index=True)
-            # # 运行回测
-            # engine = BacktestEngine(initial_capital=100000, commission=0.001, slippage=0.001)
-            # results, detailed_data = engine.run_backtest(data, signals)
-    
-            # # 获取交易记录
-            # trades = engine.get_trade_log()
-            # return results, detailed_data, trades
-
-            # chart_path = create_enhanced_trading_chart(
-            #    data, trades, detailed_data, stock_code, results, start_date, end_date
-            # )
-            # print(f"\n🎉 回测完成！图表已保存到: {chart_path}")
 
             #TODO(shawn), 这里可以添加回测结果，用于评估回测概率
             probability_gt_5_percent, total_signals, average_max_gain = analyze_signal_performance(signals, stock_code, data, start_date, end_date)

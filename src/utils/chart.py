@@ -67,7 +67,7 @@ def create_enhanced_trading_chart(data, trades, detailed_data, stock_code, resul
     ax1_twin.axhline(y=100000, color='gray', linestyle='--', alpha=0.7, label='初始资金')
     
     # 设置标题和标签
-    ax1.set_title(f'{stock_code} 主力吸货策略交易分析图', fontsize=18, fontweight='bold', pad=20)
+    ax1.set_title(f'{stock_code} 交易分析图', fontsize=18, fontweight='bold', pad=20)
     ax1.set_ylabel('股价 (¥)', fontsize=12)
     ax1_twin.set_ylabel('资产价值 (¥)', fontsize=12)
     ax1.legend(loc='upper left')
