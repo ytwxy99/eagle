@@ -105,7 +105,6 @@ class BoxBreakthroughStrategy(BaseStrategy):
             # 技术位置合理
             (df['price_position'] >= 0.01)  # 突破时价格在箱体上部80%以上
         )
-        import pdb;pdb.set_trace()
 
         # 9. 增强版突破信号（更严格的量价配合）
         enhanced_breakthrough = (
