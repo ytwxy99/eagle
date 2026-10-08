@@ -10,6 +10,7 @@ def parse_args() -> any:
     parser.add_argument('--start', default="2024-07-26", help='开始日期')
     parser.add_argument('--end', default=datetime.now().strftime('%Y-%m-%d'), help='结束日期')
     parser.add_argument('--date', help='扫描日期(默认为今天)')
+    parser.add_argument('--save-image', action='store_true', help='回测图表保存为PNG图片(默认直接在终端控制台绘制)')
     
     args = parser.parse_args()
     return args

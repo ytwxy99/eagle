@@ -21,11 +21,11 @@ def create_enhanced_trading_chart(data, trades, detailed_data, stock_code, resul
     ax1 = fig.add_subplot(gs[0, :])
     
     # 价格线
-    ax1.plot(data.index, data['close'], color='black', linewidth=1.5, label='收盘价', alpha=0.8)
+    ax1.plot(data.index, data['close'], color='black', linewidth=0.8, label='收盘价', alpha=0.8)
     
     # 移动平均线
     data['ma20'] = data['close'].rolling(window=20).mean()
-    ax1.plot(data.index, data['ma20'], color='orange', linewidth=1, label='MA20', alpha=0.7)
+    ax1.plot(data.index, data['ma20'], color='orange', linewidth=0.7, label='MA20', alpha=0.7)
     
     # 买卖点标注
     if not trades.empty:
@@ -62,8 +62,8 @@ def create_enhanced_trading_chart(data, trades, detailed_data, stock_code, resul
     
     # 盈利曲线
     ax1_twin = ax1.twinx()
-    ax1_twin.plot(detailed_data.index, detailed_data['portfolio_value'], 
-                 color='blue', linewidth=2.5, label='策略资产', alpha=0.8)
+    ax1_twin.plot(detailed_data.index, detailed_data['portfolio_value'],
+                 color='blue', linewidth=1.2, label='策略资产', alpha=0.8)
     ax1_twin.axhline(y=100000, color='gray', linestyle='--', alpha=0.7, label='初始资金')
     
     # 设置标题和标签
@@ -85,7 +85,7 @@ def create_enhanced_trading_chart(data, trades, detailed_data, stock_code, resul
     # 3. 同花顺主力真吸货指标
     ax3 = fig.add_subplot(gs[2, :])
     if 'main_force_indicator' in detailed_data.columns:
-        ax3.plot(detailed_data.index, detailed_data['main_force_indicator'], 
+        ax3.plot(detailed_data.index, detailed_data['main_force_indicator'],
                 color='purple', linewidth=1.5, label='主力真吸货指标')
         ax3.axhline(y=50, color='red', linestyle='--', alpha=0.7, label='强吸货阈值')
         ax3.axhline(y=0, color='gray', linestyle='-', alpha=0.5, label='零轴')

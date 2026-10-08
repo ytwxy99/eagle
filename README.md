@@ -58,6 +58,23 @@ print(f"夏普比率: {results['sharpe_ratio']:.2f}")
 python examples/simple_strategy_example.py
 ```
 
+## 命令行使用
+
+```bash
+# 默认：终端直接绘图（不生成文件）
+python main.py --mode accumulation --stock sh.600000
+
+# 需要图片时：加 --save-image，保存 PNG 到桌面
+python main.py --mode accumulation --stock sh.600000 --save-image
+```
+
+说明：
+- `--mode`：运行模式，可选 `accumulation`（主力吸货）或 `breakthrough`（箱体突破）
+- `--stock`：股票代码（如 `sh.600000`），默认 `sh.600477`
+- `--start` / `--end`：回测起止日期，`--end` 默认为今天
+- `--save-image`：回测图表保存为 PNG 图片到桌面（默认直接在终端控制台绘制，需 iTerm2 等支持 UTF-8 的终端）
+- 单只股票时自动运行回测并输出图表；`--stock all` 为全市场扫描，只输出符合条件的股票
+
 ## 内置策略
 
 ### 1. 移动平均线策略 (MovingAverageStrategy)

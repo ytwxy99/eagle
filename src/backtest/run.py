@@ -1,10 +1,14 @@
 from src.data.stock import get_stock_data
 from src.backtest.engine import BacktestEngine
 from src.utils.chart import create_enhanced_trading_chart
+from src.utils.term_chart import create_terminal_trading_chart
 
 
-def run_strategy_backtest(stock_code, start_date, end_date=None, backtest=False, strategy=None):
-    """运行策略回测"""
+def run_strategy_backtest(stock_code, start_date, end_date=None, backtest=False, strategy=None, terminal_chart=False):
+    """运行策略回测
+
+    terminal_chart=True 时直接在终端控制台绘制图表（不生成 PNG 文件）
+    """
     data = None
     try:
         data = get_stock_data(stock_code, start_date, end_date)
@@ -22,10 +26,15 @@ def run_strategy_backtest(stock_code, start_date, end_date=None, backtest=False,
     
             # 获取交易记录
             trades = engine.get_trade_log()
-            chart_path = create_enhanced_trading_chart(
-               data, trades, detailed_data, stock_code, results, start_date, end_date
-            )
-            print(f"\n🎉 回测完成！图表已保存到: {chart_path}")
+            if terminal_chart:
+                create_terminal_trading_chart(
+                    data, trades, detailed_data, stock_code, results, start_date, end_date
+                )
+            else:
+                chart_path = create_enhanced_trading_chart(
+                    data, trades, detailed_data, stock_code, results, start_date, end_date
+                )
+                print(f"\n🎉 回测完成！图表已保存到: {chart_path}")
                 
         if signals.tail(1)['signal'].values[0] == 1:
             #signals.to_csv('/Users/bytedance/Desktop/dessignals_output.csv', index=True)

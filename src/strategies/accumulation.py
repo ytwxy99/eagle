@@ -18,7 +18,8 @@ def run(args: any) -> any:
         
         for stock_code in stock_codes:
             buy_signal = run_strategy_backtest(
-                stock_code, args.start, args.end, len(stock_codes) == 1, strategy
+                stock_code, args.start, args.end, len(stock_codes) == 1, strategy,
+                terminal_chart=not args.save_image
             )
 
             if buy_signal:
