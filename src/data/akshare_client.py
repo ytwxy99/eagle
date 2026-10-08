@@ -24,7 +24,7 @@ import time
 import pandas as pd
 import akshare as ak
 
-logging.basicConfig(level=logging.INFO)
+# 日志级别由入口(main.py)统一配置, 此处只获取logger
 logger = logging.getLogger(__name__)
 
 # 内部列名顺序 (date, OHLC, volume 为下游必需列)
