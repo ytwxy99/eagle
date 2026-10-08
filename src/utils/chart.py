@@ -173,10 +173,10 @@ def create_enhanced_trading_chart(data, trades, detailed_data, stock_code, resul
     💵 最终资产: ¥{detailed_data['portfolio_value'].iloc[-1]:,.0f}
     📈 总收益率: {total_return:.2f}%
     📊 夏普比率: {results['sharpe_ratio']:.2f}
-    📉 最大回撤: {results['max_drawdown']:.2f}%
+    📉 最大回撤: {results['max_drawdown']:.2%}
     🔄 交易次数: {total_trades}
     🎯 胜率: {results['win_rate']:.1%}
-    💱 平均单笔收益: {results['avg_return_per_trade']:.2f}%
+    💱 平均单笔收益: {results['avg_return_per_trade']:.2%}
     """
     
     ax5.text(0.5, 0.5, stats_text, ha='center', va='center', fontsize=11,
@@ -208,6 +208,6 @@ def create_enhanced_trading_chart(data, trades, detailed_data, stock_code, resul
         print(f"   总收益率: {total_return:.2f}%")
         print(f"   最终资产: ¥{detailed_data['portfolio_value'].iloc[-1]:,.0f}")
         print(f"   夏普比率: {results['sharpe_ratio']:.2f}")
-        print(f"   最大回撤: {results['max_drawdown']:.2f}%")
+        print(f"   最大回撤: {results['max_drawdown']:.2%}")
     
     return filepath

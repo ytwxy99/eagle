@@ -29,22 +29,23 @@ class BacktestEngine:
         if 'signal' not in signals.columns:
             raise ValueError("信号数据必须包含'signal'列")
         
-        # 合并数据
+        # 合并数据: 信号列与策略输出的指标列一并对齐合并(供图表/分析使用)
         df = data.copy()
-        df['signal'] = signals['signal']
-        
-        # 计算持仓
-        #df['position'] = df['signal'].diff()
-        """
-        | 信号变化 (当前-前值) | position值 | 交易行为 | |---------------------|------------|-------------------| | 1 → 0 | -1 | 平仓（多头离场） | | 0 → 1 | +1 | 开仓（建立多头） | | 1 → 1 | 0 | 持仓不变 | | -1 → 0 | +1 | 平仓（空头离场） | | 0 → -1 | -1 | 开仓（建立空头） |
-        """
+        for col in signals.columns:
+            df[col] = signals[col]
         
         # 计算每日收益
+        # A股只做多: 持仓 = 信号为1的时段; 离场日的-1仅是卖出标记,
+        # 不视为空头仓位(否则卖出次日会产生一天的幻影空头收益)
         df['returns'] = df['close'].pct_change()
-        df['strategy_returns'] = df['signal'].shift(1) * df['returns']
+        df['position'] = df['signal'].shift(1).clip(lower=0)
+        df['strategy_returns'] = df['position'] * df['returns']
         
-        # 考虑手续费
-        df['commission_cost'] = abs(df['signal']) * self.commission
+        # 考虑手续费: 仅按建仓/离场事件各收一次
+        # (旧实现按 signal 非零的每一天收取, 长周期持仓会被重复扣费严重失真)
+        buy_day = (df['signal'] == 1) & (df['signal'].shift(1) != 1)
+        trade_day = buy_day | (df['signal'] == -1)
+        df['commission_cost'] = trade_day.astype(int) * self.commission
         df['strategy_returns'] = df['strategy_returns'] - df['commission_cost']
         
         # 计算累计收益
@@ -60,28 +61,41 @@ class BacktestEngine:
         return results, df
     
     def _record_trades(self, df):
-        """记录交易"""
-        first_trade = 0
+        """记录交易(以持仓状态变化为准)
+
+        BUY  = 空仓时 signal 变为 1 (建仓)
+        SELL = 持仓时 signal 离开 1 (信号卖出 -1 或条件失效归 0, 均视为离场)
+        保证 BUY/SELL 严格交替, 供图表按序配对; 全程持仓到最后则末笔无对应卖出。
+        """
         trades = []
-        
+        holding = False
+
         for i, row in df.iterrows():
-            if row['signal'] > 0:
-                first_trade = first_trade + 1
+            signal = row['signal']
+            if pd.isna(signal):
+                continue
 
-            if row['signal'] > 0:
-                if first_trade ==0:
-                    continue
-
-                trade = {
+            if not holding and signal == 1:
+                trades.append({
                     'date': i,
-                    'type': 'BUY' if row['signal'] > 0 else 'SELL',
+                    'type': 'BUY',
                     'price': row['close'],
-                    'shares': abs(row['signal']),
-                    'value': abs(row['signal']) * row['close'],
-                    'commission': abs(row['signal']) * row['close'] * self.commission
-                }
-                trades.append(trade)
-        
+                    'shares': 1,
+                    'value': row['close'],
+                    'commission': row['close'] * self.commission
+                })
+                holding = True
+            elif holding and signal != 1:
+                trades.append({
+                    'date': i,
+                    'type': 'SELL',
+                    'price': row['close'],
+                    'shares': 1,
+                    'value': row['close'],
+                    'commission': row['close'] * self.commission
+                })
+                holding = False
+
         self.trades = pd.DataFrame(trades)
     
     def _calculate_performance_metrics(self, df):
@@ -102,17 +116,17 @@ class BacktestEngine:
         drawdown = (cumulative - running_max) / running_max
         max_drawdown = drawdown.min()
         
-        # 胜率
-        if len(self.trades) > 1:
-            # 简化的胜率计算
-            non_zero_returns = strategy_returns[strategy_returns != 0]
-            if len(non_zero_returns) > 0:
-                profitable_trades = len(non_zero_returns[non_zero_returns > 0])
-                win_rate = profitable_trades / len(non_zero_returns)
-            else:
-                win_rate = 0
-        else:
-            win_rate = 0
+        # 胜率与平均单笔收益: 按 BUY/SELL 配对的完整回合计算(卖出价高于买入价记为胜)
+        win_rate = 0
+        avg_return_per_trade = 0
+        if len(self.trades) >= 2:
+            buys = self.trades[self.trades['type'] == 'BUY']['price'].reset_index(drop=True)
+            sells = self.trades[self.trades['type'] == 'SELL']['price'].reset_index(drop=True)
+            n = min(len(buys), len(sells))
+            if n > 0:
+                round_trips = (sells.iloc[:n] - buys.iloc[:n]) / buys.iloc[:n]
+                win_rate = float((round_trips > 0).mean())
+                avg_return_per_trade = float(round_trips.mean())
         
         # 交易统计
         total_trades = len(self.trades)
@@ -126,7 +140,7 @@ class BacktestEngine:
             'win_rate': win_rate,
             'total_trades': total_trades,
             'final_value': df['portfolio_value'].iloc[-1],
-            'avg_return_per_trade': strategy_returns.mean() * 252,
+            'avg_return_per_trade': avg_return_per_trade,
             'profit_factor': abs(strategy_returns[strategy_returns > 0].sum() / 
                                strategy_returns[strategy_returns < 0].sum()) if len(strategy_returns[strategy_returns < 0]) > 0 else 0
         }

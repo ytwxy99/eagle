@@ -2,7 +2,7 @@
 import datetime
 import os
 
-from src.data.baostock_client import get_all_stocks, get_historical_data
+from src.data.akshare_client import get_all_stocks, get_historical_data
 
 
 def get_stock_data(stock_code, start_date, end_date=None):
