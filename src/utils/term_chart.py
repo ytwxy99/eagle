@@ -23,10 +23,10 @@ def _new_figure(width, height, title):
 
 
 def _plot_series(series, color, label):
-    """按整数 x 坐标绘制序列，自动跳过 NaN（fhd 线型）"""
+    """按整数 x 坐标绘制序列，自动跳过 NaN（braille 点阵线型）"""
     valid = series.notna()
     xs = [i for i, v in enumerate(valid) if v]
-    plt.plot(xs, series[valid].tolist(), marker='fhd', color=color, label=label)
+    plt.plot(xs, series[valid].tolist(), marker='braille', color=color, label=label)
 
 
 def _date_positions(dates_index, trade_dates):
